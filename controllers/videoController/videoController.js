@@ -1,9 +1,9 @@
 const database = require("../../lib/database")
 const utilities = require("../../lib/utilities")
 
-const userAuthController = {}
+const videoController = {}
 
-userAuthController.login = ("/user/login", async (req, res)=>{
+videoController.getVideos = ("/get-videos", async (req, res)=>{
     try {
         const payload = JSON.parse(req.body)
 
@@ -62,34 +62,4 @@ userAuthController.login = ("/user/login", async (req, res)=>{
 })
 
 
-userAuthController.logout = ("/logout", async (req, res)=>{
-    try {
-        // Clear the token cookie by setting it with an expired date
-        res.clearCookie("token", {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "Strict",
-          path: "/"
-        });
-    
-        // Send a success response
-        utilities.setResponseData(
-          res,
-          200,
-          { 'content-type': 'application/json' },
-          { msg: "Logout successful" },
-          true
-        );
-    } catch (err) {
-        console.error(err);
-        utilities.setResponseData(
-          res,
-          500,
-          { 'content-type': 'application/json' },
-          { msg: "Server error" },
-          true
-        );
-    }
-})
-
-module.exports = userAuthController
+module.exports = videoController

@@ -12,7 +12,7 @@ studentAuthController.signup = ("/student-signup", async (req, res)=>{
         //Validate payload
         const paylodStatus = await utilities.userSignupValidator(payload, ["firstName", "lastName", "email", "username", "phoneNo", "school", "department", "level", "password"])
         if(!paylodStatus.isValid){
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: paylodStatus.msg}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: paylodStatus.msg}, true)
             return
         }
 
@@ -24,7 +24,7 @@ studentAuthController.signup = ("/student-signup", async (req, res)=>{
 
 
         if(uniqueChecker.doesUserDetailExist){
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {statusCode: 400, msg: `this ${uniqueChecker.userDetail} already exists`}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: `this ${uniqueChecker.userDetail} already exists`}, true)
             return
         }
         //hash password
@@ -48,7 +48,7 @@ studentAuthController.signup = ("/student-signup", async (req, res)=>{
         const savedStudent = await database.insertOne(payload, database.collections.users)
 
         //send response
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, responseData: {userID: savedStudent.insertedId}}, true)
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {userID: savedStudent.insertedId}, true)
 
         //SEND EMAIL HERE
 
@@ -58,7 +58,7 @@ studentAuthController.signup = ("/student-signup", async (req, res)=>{
     } 
     catch (err) {
         console.log(err)    
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "server error"}, true)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
         return
     }
 })

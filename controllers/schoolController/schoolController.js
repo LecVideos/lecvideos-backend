@@ -9,13 +9,13 @@ schoolController.getAllSchools = ("/get-all-schools", async (req, res)=>{
         const schools = await database.db.collection(database.collections.schools).find().sort({name: 1}).toArray()
 
         //send response
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, schools}, true)
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {schools}, true)
         return
 
     } 
     catch (err) {
         console.log(err)    
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, msg: "server error"}, true)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
         return
     }
 })

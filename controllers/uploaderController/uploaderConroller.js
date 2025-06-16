@@ -9,6 +9,30 @@ const uploaderController = {}
 
 uploaderController.uploadVideo = ("/upload-video", async (req, res)=>{
     try {
+        const user = req.decodedToken
+        const userID = user.userID;
+        const io = req.app.get("io");
+
+        //convert all department ID's from strng to objectID
+        req.body.departments = JSON.parse(req.body.departments)
+        req.body.departments.forEach((deptID, index)=> {
+            req.body.departments[index] = ObjectId.createFromHexString(deptID)
+
+        })
+
+        //convert date from string to ISO date
+        req.body.date = new Date(req.body.date)
+        
+        //set school
+        let school;
+        if(user.role == "uploader" || user.role == "admin2"){
+            const userObj = await database.findOne({_id: ObjectId.createFromHexString(user.userID)}, database.collections.users)
+            school = userObj.school
+        }
+        else{
+            school = ObjectId.createFromHexString(req.body.school)
+        }
+        
         
         // Step 1: Auth
         const oauth2Client = new google.auth.OAuth2(
@@ -33,7 +57,7 @@ uploaderController.uploadVideo = ("/upload-video", async (req, res)=>{
 
 
         const videoTitle = req.body.title || 'Untitled Video';
-        const videoDescription = req.body.description || 'This is a test video';
+        const videoDescription = req.body.description || 'No video description';
         const videoTags = req.body.tags ? req.body.tags.split(',') : ['test', 'upload'];
 
         // Step 3: Create the resumable upload request
@@ -57,12 +81,10 @@ uploaderController.uploadVideo = ("/upload-video", async (req, res)=>{
         }, {
             // Optional request parameters for resumable uploads
             onUploadProgress: evt => {
-                const progress = (evt.bytesRead / fileSize) * 100;
-                console.log(`Upload progress: ${progress.toFixed(2)}%`);
+                const progress = Math.floor((evt.bytesRead / fileSize) * 100);
+                io.to(userID).emit("uploadProgress", { progress });
             }
         });
-
-        console.log('YouTube response:', resYoutube.data);
 
         // Step 4: Save the video metadata to your database (MongoDB)
         
@@ -71,35 +93,33 @@ uploaderController.uploadVideo = ("/upload-video", async (req, res)=>{
             title: videoTitle,
             description: videoDescription,
             course: req.body.course,
-            department: ObjectId.createFromHexString(req.body.department),
-            school: ObjectId.createFromHexString(req.body.school),
+            departments: req.body.departments,
+            school: school,
             tags: videoTags,
+            date: req.body.date,
             fileName: req.file.filename,
             youtubeVideoId: resYoutube.data.id,
             youtubeUrl: `https://www.youtube.com/watch?v=${resYoutube.data.id}`,
             createdAt: new Date()
         };
 
-
         await database.insertOne(videoMetadata, database.collections.videos) //(videoMetadata);
-        console.log("done")
 
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {statusCode: 200, responseData: {msg: "sucess"}}, true)
+        // Auto-delete the file from disk after successful upload
+        fs.unlink(filePath, (err) => {
+            if (err) {
+                console.error(`Failed to delete file ${filePath}:`, err);
+            } 
+        });
+
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {msg: "sucess"}, true)
       
         
     } 
     catch (err) {
         console.log(err)
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {
-            statusCode: 500,
-            responseData: { msg: "Video upload failed", error: err.message }
-        }, true);
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, { msg: "Video upload failed", error: err.message }, true);
     }
 })
-
-
-
-
-  
 
 module.exports = uploaderController

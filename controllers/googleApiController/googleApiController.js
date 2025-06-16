@@ -25,7 +25,7 @@ googleApiController.auth = ("/google-auth", async (req, res)=>{
     } 
     catch (err) {
         console.log(err)    
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, responseData: "server error"}, true)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
         return
     }
 })
@@ -45,7 +45,7 @@ googleApiController.authCallback = ("/oauth2callback", async (req, res)=>{
     }
     catch (err) {
         console.log(err)    
-        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {statusCode: 500, responseData: "server error"}, true)
+        utilities.setResponseData(res, 500, {'content-type': 'application/json'}, {msg: "server error"}, true)
         return
     }
 })
