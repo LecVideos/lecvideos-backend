@@ -1,3 +1,4 @@
+const {ObjectId} = require("mongodb")
 const database = require("../../lib/database")
 const utilities = require("../../lib/utilities")
 
@@ -5,52 +6,28 @@ const videoController = {}
 
 videoController.getVideos = ("/get-videos", async (req, res)=>{
     try {
-        const payload = JSON.parse(req.body)
+        const userID =  ObjectId.createFromHexString(req.decodedToken.userID)
+        const payload = req.query
 
         // check if user exists
-        const user = await database.findOne({email: payload.email}, database.collections.users)
+        const user = await database.findOne({_id: userID, deleted: false}, database.collections.users)
 
         if(!user){
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "invalid email or password"}, true)
+            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "User not found"}, true)
             return
+        } 
+        
+        if(user.role !== "admin1"){
+            payload.school = user.school
         }
 
-        //check if email is verified
-        if(!user.isEmailVerified){
-            //generate new OTP
-            const otp = utilities.otpGenerator()
-            //update user object
-            await database.updateOne({_id: user._id}, database.collections.users, {otp})
-            //send response
-            utilities.setResponseData(res, 401, {'content-type': 'application/json'}, {msg: "Unverified email", userId: user._id}, true)
-            //SEND OTP TO EMAIL
-            
-            return
-        }
-        //hash password
-        payload.password = utilities.dataHasher(payload.password)
-        //check if password match
-        if(payload.password !== user.password){
-            utilities.setResponseData(res, 400, {'content-type': 'application/json'}, {msg: "invalid email or password"}, true)
-            return
+        if(!payload.department && user.role !== "admin1" && user.role !== "admin2"){
+            payload.department = user.department
         }
 
-        //create token
-        const token = utilities.jwt("s", {userID: user._id, role: user.role})
-        delete user.password
-        delete user.otp
-
-        // Set the token in an HTTP-only cookie
-        res.cookie("token", token, {
-            httpOnly: true,           
-            secure: process.env.NODE_ENV === "production", 
-            sameSite: "Strict",       // Helps protect against CSRF
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
-            path: "/"
-        });
             
         //send response
-        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {user}, true)
+        utilities.setResponseData(res, 200, {'content-type': 'application/json'}, {videos}, true)
         return
         
     } 

@@ -39,6 +39,7 @@ studentAuthController.signup = ("/student-signup", async (req, res)=>{
         //add other properties
         payload.role = "student"
         payload.createdAt = new Date()
+        payload.deleted = false
         payload.isEmailVerified = true //THIS SHOULD BE CHANGED TO FALSE ON PODUCTION
 
         //generate otp

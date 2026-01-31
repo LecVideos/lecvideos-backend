@@ -94,12 +94,14 @@ uploaderController.uploadVideo = ("/upload-video", async (req, res)=>{
             description: videoDescription,
             course: req.body.course,
             departments: req.body.departments,
+            level: parseInt(req.body.level),
             school: school,
             tags: videoTags,
             date: req.body.date,
             fileName: req.file.filename,
             youtubeVideoId: resYoutube.data.id,
             youtubeUrl: `https://www.youtube.com/watch?v=${resYoutube.data.id}`,
+            uploadedBy: ObjectId.createFromHexString(userID),
             createdAt: new Date()
         };
 
